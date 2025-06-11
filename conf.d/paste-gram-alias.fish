@@ -1,0 +1,1 @@
+alias ptg2='paste-gram'

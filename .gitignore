@@ -1,0 +1,7 @@
+### Fish template
+fishd.*
+fish_history
+fish_variables
+config.local.fish
+
+.idea
