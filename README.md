@@ -13,7 +13,7 @@ Send text or files to your Telegram chat directly from the Fish shell!
 - 🧾 Sends:
   - Messages (via direct argument or stdin)
   - Files (as documents with optional caption)
-- 🖥️ Prepends hostname and command to all messages
+- 🖥️ Can prepend hostname and/or command line (configurable)
 - 🔐 Gets config from environment variables
 
 ---
@@ -42,6 +42,8 @@ set -Ux TELEGRAM_TOKEN 'your_bot_token_here'
 set -Ux TELEGRAM_CHAT_ID '123456789'
 # Optional:
 set -Ux TELEGRAM_API_URL 'https://api.telegram.org'
+set -Ux PASTEGRAM_HOSTNAME 'true'
+set -Ux PASTEGRAM_LAST_COMMAND 'true'
 ```
 
 ---
@@ -94,20 +96,19 @@ ptg "Direct hello from fish"
 ptg ~/Documents/log.txt
 ```
 
-**Note:** Every message will include:
-- Line 1: Hostname (e.g., `my-server`)
-- Line 2: Full command line used (e.g., `echo "hi" | ptg`)
-- Line 3+: Your message content
+If `PASTEGRAM_HOSTNAME` or `PASTEGRAM_LAST_COMMAND` is set to `"true"`, those will be prepended to your message or file caption.
 
 ---
 
 ## 🔧 Environment Variables
 
-| Variable            | Required | Description                                          |
-|---------------------|----------|------------------------------------------------------|
-| `TELEGRAM_TOKEN`    | ✅ yes   | Telegram bot token from BotFather                   |
-| `TELEGRAM_CHAT_ID`  | ✅ yes   | Chat ID (from @getidsbot or Bot API)                |
-| `TELEGRAM_API_URL`  | ❌ no    | Defaults to `https://api.telegram.org` if unset     |
+| Variable                  | Required | Default | Description                                                  |
+|---------------------------|----------|---------|--------------------------------------------------------------|
+| `TELEGRAM_TOKEN`          | ✅ yes   | —       | Telegram bot token from BotFather                           |
+| `TELEGRAM_CHAT_ID`        | ✅ yes   | —       | Chat ID (from @getidsbot or Bot API)                        |
+| `TELEGRAM_API_URL`        | ❌ no    | `https://api.telegram.org` | Override default Telegram API URL (e.g. for proxy) |
+| `PASTEGRAM_HOSTNAME`      | ❌ no    | `false` | If `"true"`, includes hostname in message                    |
+| `PASTEGRAM_LAST_COMMAND`  | ❌ no    | `false` | If `"true"`, includes executed command line in message       |
 
 ---
 

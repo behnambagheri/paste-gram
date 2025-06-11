@@ -5,3 +5,6 @@ fish_variables
 config.local.fish
 
 .idea
+
+functions/*test*
+test
