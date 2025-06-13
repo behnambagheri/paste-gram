@@ -13,13 +13,16 @@ function paste-gram --description "Send text or file to Telegram" --argument cmd
 
     set -l m_hostname (hostname)
 
-    sync_history
+    #sync_history
+    history --merge
     set -l full_cmd (history --max 2 | head -n 1)
 
     set -l head_message_text_file (mktemp)
     set -l body_meesage_text_file (mktemp)
     set -l message_text_file (mktemp)
     set -l splitdir (mktemp -d)
+    set -l compressdir (mktemp -d)
+
 
 
 
@@ -47,17 +50,30 @@ function paste-gram --description "Send text or file to Telegram" --argument cmd
         echo -e "\n=======================\n" >> "$head_message_text_file"
     end
 
-#     cat $head_message_text_file
+    #cat $head_message_text_file
 
 #++++++++++++++++++++++++++++++++++++++++++
 
     if isatty stdin
         if test -n "$argv"
-#             echo "Reading from arguments..."
+        #echo "Reading from arguments..."
             if test -f "$argv[1]"
                 echo "Uploading file..."
-                set -l file $argv[1]
+                set -f file $argv[1]
                 set -l abs_path (realpath $file)
+
+                if test (uname) = "Darwin"
+                    set file_size (stat -f %z "$file")
+                else
+                    set file_size (stat -c %s "$file")
+                end
+
+
+                set  file_size_mb (math "$file_size / 1024 / 1024")
+                set  file_name (basename "$file")
+                set  dir_name (dirname "$file")
+
+                echo -e "File Size: $file_size_mb MB"
 
                 echo -e "Caption:\n" > "$message_text_file"
                 cat "$head_message_text_file" >> "$message_text_file"
@@ -66,13 +82,67 @@ function paste-gram --description "Send text or file to Telegram" --argument cmd
 
                 set -l caption (printf "📄 <b>File:</b> %s\n📍 <b>Path:</b> %s" (basename $file) $abs_path)
 
-                set response (curl -s -X POST "$api_url"/bot$token/"sendDocument" \
-                    -F chat_id="$chat_id" \
-                    -F document=@"$file" \
-                    -F caption="$(cat $message_text_file)" \
-                    -F parse_mode="HTML" \
-                    --connect-timeout 10 \
-                    --max-time 30)
+                #++++++++++++++++++++++++++++++++++++++
+                if test "$file_size_mb" -gt 50
+                    # Compress the file first
+                    echo -e "Compress the file first."
+
+                    set -l tar_file "$compressdir/$file_name.tgz"
+                    tar czvf "$tar_file" -C $dir_name "$file_name"
+
+                    if test (uname) = "Darwin"
+                        set file_size (stat -f %z "$tar_file")
+                    else
+                        set file_size (stat -c %s "$tar_file")
+                    end
+
+                    set  file_size_mb (math "$file_size / 1024 / 1024")
+                    echo -e "File size after compress: $file_size_mb MB"
+                    set  file $tar_file
+                    set  file_name (basename "$tar_file")
+                    set  abs_path (realpath $tar_file)
+
+                end
+
+                if test "$file_size_mb" -gt 50
+                    echo -e "Chuck the compress file."
+                    split -b 49MB -d "$file" $splitdir/"$file_name"_
+                    echo -e "Send Chuck: $i"
+                    for i in "$splitdir/$file_name"_*
+                        set response (curl -s -X POST "$api_url"/bot$token/"sendDocument" \
+                            -F chat_id="$chat_id" \
+                            -F document=@"$i" \
+                            -F caption="$(cat $message_text_file)" \
+                            -F parse_mode="HTML" \
+                            --connect-timeout 10 \
+                            --max-time 30)
+
+                        set -l status_ok (echo $response | jq .ok)
+                        set -l status_description (echo $response | jq .description)
+
+                        if test $status -ne 0
+                            echo "Error: Failed to connect to Telegram API!"
+                            return 1
+                        end
+
+                        if not echo $response | jq -e '.ok' >/dev/null
+                            echo "Error: Failed to send chunk: "(echo $response | jq -r '.description // "Unknown error"')
+                            return 1
+                        end
+                        rm -f "$i"
+                    end
+                else
+
+                    set response (curl -s -X POST "$api_url"/bot$token/"sendDocument" \
+                        -F chat_id="$chat_id" \
+                        -F document=@"$file" \
+                        -F caption="$(cat $message_text_file)" \
+                        -F parse_mode="HTML" \
+                        --connect-timeout 10 \
+                        --max-time 30)
+
+                    set -l status_ok (echo $response | jq .ok)
+                    set -l status_description (echo $response | jq .description)
 
                     if test $status -ne 0
                         echo "Error: Failed to connect to Telegram API!"
@@ -83,6 +153,9 @@ function paste-gram --description "Send text or file to Telegram" --argument cmd
                         echo "Error: Failed to send chunk: "(echo $response | jq -r '.description // "Unknown error"')
                         return 1
                     end
+                end
+                #++++++++++++++++++++++++++++++++++++++
+
             else
 #                 echo "string from argument: $argv"
                 set -l message $argv[1]

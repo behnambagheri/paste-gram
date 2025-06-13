@@ -14,3 +14,16 @@
 ### Fixed
 - Error handling for Telegram API and curl failures
 - Corrected logic to prevent malformed HTML in message chunks
+
+
+## [v1.1.0] - 2025-06-13
+
+### Added
+- File compression using `tar czvf` for files larger than 50MB
+- Automatic chunking of compressed files into 49MB parts
+- Telegram API retry-safe upload per chunk
+- Enhanced caption with file name and full path
+
+### Fixed
+- Cross-platform `stat` compatibility (macOS/Linux)
+- Better error detection for failed Telegram uploads

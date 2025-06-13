@@ -4,6 +4,12 @@ Send text or files to your Telegram chat directly from the Fish shell!
 
 `paste-gram` is a lightweight Fish plugin that sends any input (either text or a file) to your Telegram bot using the Bot API. You can pipe output from other commands or pass messages/files directly. Perfect for quick remote sharing, logging, or personal note-taking!
 
+### 🚀 New in v1.1.0
+- Files over 50MB are now automatically compressed using `tar.gz`.
+- Compressed files are split into 49MB chunks and sent in sequence.
+- Compatible with both Linux and macOS.
+- Enhanced HTML-based captions include hostname, last command, and absolute path.
+
 ---
 
 ## ✨ Features
@@ -21,7 +27,11 @@ Send text or files to your Telegram chat directly from the Fish shell!
 ## 🧰 Requirements
 
 - Fish shell 3.0 or higher
-- `curl` installed
+- `curl`
+- `jq`
+- `curl`
+- `tar`
+- `split`
 - Telegram bot with a valid token
 - Your own chat ID (or a group chat ID where your bot is added)
 
@@ -114,4 +124,4 @@ If `PASTEGRAM_HOSTNAME` or `PASTEGRAM_LAST_COMMAND` is set to `"true"`, those wi
 
 ## 🧾 License
 
-MIT License © 2025 [Your Name]
+MIT License © 2025 [Behnam Bagheri]
